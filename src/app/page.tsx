@@ -1,13 +1,18 @@
 'use client'
 
+import Product from '@/components/Products/Product'
+import ProductSkeleton from '@/components/Products/ProductSkeleton'
 import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import type { Product as TProduct } from '@/db'
 import { cn } from '@/lib/utils'
 import { DropdownMenu } from '@radix-ui/react-dropdown-menu'
+import { useQuery } from '@tanstack/react-query'
+import { QueryResult } from '@upstash/vector'
+import axios from 'axios'
 import { ChevronDown, Filter } from 'lucide-react'
-import Image from 'next/image'
 import { useState } from 'react'
 
 const SORT_OPTIONS = [
@@ -21,7 +26,22 @@ export default function Home() {
   const [filter, setFilter] = useState({
     sort: 'none',
   })
-  console.log(filter)
+
+  const { data: products } = useQuery({
+    queryKey: ['products'], // the result of the data caching
+    queryFn: async () => {
+      const { data } = await axios.post<QueryResult<TProduct>[]>(
+        'http://localhost:3000/api/products',
+        {
+          filter: {
+            sort: filter.sort,
+          },
+        }
+      )
+      return data
+    },
+  })
+
   return (
     <main className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
       <div className='flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24'>
@@ -61,6 +81,25 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      <section className='pb-24 pt-6'>
+        <div className='grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4'>
+          {/* FILTERS */}
+          <div></div>
+
+          {/* PRODUCT GRID */}
+          <ul className='lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8'>
+            {products
+              ? products.map((product, index) => (
+                  <Product key={index} product={product.metadata!} />
+                  // metadata is the data that we have stored in the database (name, price, imageId, etc.)
+                ))
+              : new Array(12)
+                  .fill(null)
+                  .map((_, i) => <ProductSkeleton key={i} />)}
+          </ul>
+        </div>
+      </section>
     </main>
   )
 }
