@@ -20,8 +20,9 @@ class Filter {
 
     // add value to filter but if it is a number, add it without quotes
     filter.push(
-      `${key} ${value} ${typeof value === 'number' ? value : `"${value}"`}`
+      `${key} ${operator} ${typeof value === 'number' ? value : `"${value}"`}`
     )
+    this.filters.set(key, filter)
   }
 
   addRaw(key: string, rawFilter: string) {

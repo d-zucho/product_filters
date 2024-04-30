@@ -18,11 +18,13 @@ import type { Product as TProduct } from '@/db'
 import { cn } from '@/lib/utils'
 import { ProductState } from '@/lib/validators/product-validator'
 
+import debounce from 'lodash.debounce'
 import { useQuery } from '@tanstack/react-query'
 import { QueryResult } from '@upstash/vector'
 import axios from 'axios'
 import { ChevronDown, Filter } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
+import _ from 'lodash'
 
 const SORT_OPTIONS = [
   { name: 'none', value: 'none' },
@@ -82,7 +84,7 @@ export default function Home() {
   })
 
   // useQuery is a hook that will cache the data for us
-  const { data: products } = useQuery({
+  const { data: products, refetch } = useQuery({
     queryKey: ['products'], // the result of the data caching
     queryFn: async () => {
       const { data } = await axios.post<QueryResult<TProduct>[]>(
@@ -99,6 +101,11 @@ export default function Home() {
       return data
     },
   })
+
+  const onSubmit = () => refetch()
+
+  const debouncedSubmit = debounce(onSubmit, 400)
+  const _debouncedSubmit = useCallback(debouncedSubmit, [])
 
   /**
    * the keyof operator will give us the keys
@@ -126,12 +133,14 @@ export default function Home() {
         [category]: [...prev[category], value],
       }))
     }
+
+    // refetch the data
+    _debouncedSubmit()
   }
 
   const minPrice = Math.min(filter.price.range[0], filter.price.range[1])
   const maxPrice = Math.max(filter.price.range[0], filter.price.range[1])
 
-  console.log(filter)
   return (
     <main className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
       <div className='flex items-baseline justify-between border-b border-gray-200 pb-6 pt-24'>
@@ -159,6 +168,7 @@ export default function Home() {
                       ...prev,
                       sort: option.value,
                     }))
+                    _debouncedSubmit()
                   }}
                 >
                   {option.name}
@@ -212,6 +222,7 @@ export default function Home() {
                               category: 'color',
                               value: option.value,
                             })
+                            _debouncedSubmit()
                           }}
                         />
                         <label
@@ -248,6 +259,7 @@ export default function Home() {
                               category: 'size',
                               value: option.value,
                             })
+                            _debouncedSubmit()
                           }}
                         />
                         <label
@@ -291,6 +303,7 @@ export default function Home() {
                                 range: [...option.value],
                               },
                             }))
+                            _debouncedSubmit()
                           }}
                         />
                         <label
@@ -316,6 +329,7 @@ export default function Home() {
                                 range: [0, 100],
                               },
                             }))
+                            _debouncedSubmit()
                           }}
                         />
                         <label
@@ -351,6 +365,7 @@ export default function Home() {
                               range: [newMin, newMax],
                             },
                           }))
+                          _debouncedSubmit()
                         }}
                         value={
                           filter.price.isCustom
