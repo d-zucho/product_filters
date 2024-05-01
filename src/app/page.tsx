@@ -25,6 +25,7 @@ import axios from 'axios'
 import { ChevronDown, Filter } from 'lucide-react'
 import { useCallback, useState } from 'react'
 import _ from 'lodash'
+import EmptyState from '@/components/Products/EmptyState'
 
 const SORT_OPTIONS = [
   { name: 'none', value: 'none' },
@@ -222,7 +223,6 @@ export default function Home() {
                               category: 'color',
                               value: option.value,
                             })
-                            _debouncedSubmit()
                           }}
                         />
                         <label
@@ -259,7 +259,6 @@ export default function Home() {
                               category: 'size',
                               value: option.value,
                             })
-                            _debouncedSubmit()
                           }}
                         />
                         <label
@@ -386,14 +385,18 @@ export default function Home() {
 
           {/* PRODUCT GRID */}
           <ul className='lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8'>
-            {products
-              ? products.map((product, index) => (
-                  <Product key={index} product={product.metadata!} />
-                  // metadata is the data that we have stored in the database (name, price, imageId, etc.)
-                ))
-              : new Array(12)
-                  .fill(null)
-                  .map((_, i) => <ProductSkeleton key={i} />)}
+            {products && products.length === 0 ? (
+              <EmptyState />
+            ) : products ? (
+              products.map((product, index) => (
+                <Product key={index} product={product.metadata!} />
+                // metadata is the data that we have stored in the database (name, price, imageId, etc.)
+              ))
+            ) : (
+              new Array(12)
+                .fill(null)
+                .map((_, i) => <ProductSkeleton key={i} />)
+            )}
           </ul>
         </div>
       </section>
